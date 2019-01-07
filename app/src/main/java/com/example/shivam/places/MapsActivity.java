@@ -3,6 +3,7 @@ package com.example.shivam.places;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -14,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,6 +28,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +38,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     LocationManager locationManager;
     LocationListener locationListener;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +126,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
         String address = "";
+        sharedPreferences = this.getSharedPreferences("com.example.shivam.places", Context.MODE_PRIVATE);
+        ArrayList<String> lats = new ArrayList<String>();
+        ArrayList<String> lons = new ArrayList<String>();
 
         try {
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
@@ -148,5 +155,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MainActivity.locations.add(latLng);
 
         MainActivity.adapter.notifyDataSetChanged();
+        Toast.makeText(this, "Location saved!", Toast.LENGTH_LONG).show();
+
+        try {
+            sharedPreferences.edit().putString("places", ObjectSerializer.serialize(MainActivity.places)).apply();
+
+            for (LatLng cord : MainActivity.locations) {
+                lats.add(Double.toString(cord.latitude));
+                lons.add(Double.toString(cord.longitude));
+            }
+
+            sharedPreferences.edit().putString("latitudes", ObjectSerializer.serialize(lats)).apply();
+            sharedPreferences.edit().putString("longitudes", ObjectSerializer.serialize(lons)).apply();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
